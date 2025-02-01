@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Header, Segment } from 'semantic-ui-react';
+import { Card, Header, Segment } from 'semantic-ui-react';
 import { API, showError } from '../../helpers';
 import { marked } from 'marked';
 
@@ -28,31 +28,38 @@ const About = () => {
   useEffect(() => {
     displayAbout().then();
   }, []);
-
   return (
     <>
-      {
-        aboutLoaded && about === '' ? <>
-          <Segment>
-            <Header as='h3'>关于</Header>
-            <p>可在设置页面设置关于内容，支持 HTML & Markdown</p>
-            项目仓库地址：
-            <a href='https://github.com/songquanpeng/one-api'>
-              https://github.com/songquanpeng/one-api
-            </a>
-          </Segment>
-        </> : <>
-          {
-            about.startsWith('https://') ? <iframe
+      {aboutLoaded && about === '' ? (
+        <div className='dashboard-container'>
+          <Card fluid className='chart-card'>
+            <Card.Content>
+              <Card.Header className='header'>关于系统</Card.Header>
+              <p>可在设置页面设置关于内容，支持 HTML & Markdown</p>
+              项目仓库地址：
+              <a href='https://github.com/songquanpeng/one-api'>
+                https://github.com/songquanpeng/one-api
+              </a>
+            </Card.Content>
+          </Card>
+        </div>
+      ) : (
+        <>
+          {about.startsWith('https://') ? (
+            <iframe
               src={about}
               style={{ width: '100%', height: '100vh', border: 'none' }}
-            /> : <div style={{ fontSize: 'larger' }} dangerouslySetInnerHTML={{ __html: about }}></div>
-          }
+            />
+          ) : (
+            <div
+              style={{ fontSize: 'larger' }}
+              dangerouslySetInnerHTML={{ __html: about }}
+            ></div>
+          )}
         </>
-      }
+      )}
     </>
   );
 };
-
 
 export default About;

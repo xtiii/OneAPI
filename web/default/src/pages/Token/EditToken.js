@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Header, Message, Segment } from 'semantic-ui-react';
+import {
+  Button,
+  Form,
+  Header,
+  Message,
+  Segment,
+  Card,
+} from 'semantic-ui-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { API, copy, showError, showSuccess, timestamp2string } from '../../helpers';
+import {
+  API,
+  copy,
+  showError,
+  showSuccess,
+  timestamp2string,
+} from '../../helpers';
 import { renderQuotaWithPrompt } from '../../helpers/render';
 
 const EditToken = () => {
@@ -16,7 +29,7 @@ const EditToken = () => {
     expired_time: -1,
     unlimited_quota: false,
     models: [],
-    subnet: "",
+    subnet: '',
   };
   const [inputs, setInputs] = useState(originInputs);
   const { name, remain_quota, expired_time, unlimited_quota } = inputs;
@@ -79,7 +92,7 @@ const EditToken = () => {
         return {
           key: model,
           text: model,
-          value: model
+          value: model,
         };
       });
       setModelOptions(options);
@@ -103,7 +116,10 @@ const EditToken = () => {
     localInputs.models = localInputs.models.join(',');
     let res;
     if (isEdit) {
-      res = await API.put(`/api/token/`, { ...localInputs, id: parseInt(tokenId) });
+      res = await API.put(`/api/token/`, {
+        ...localInputs,
+        id: parseInt(tokenId),
+      });
     } else {
       res = await API.post(`/api/token/`, localInputs);
     }
@@ -121,98 +137,142 @@ const EditToken = () => {
   };
 
   return (
-    <>
-      <Segment loading={loading}>
-        <Header as='h3'>{isEdit ? '更新令牌信息' : '创建新的令牌'}</Header>
-        <Form autoComplete='new-password'>
-          <Form.Field>
-            <Form.Input
-              label='名称'
-              name='name'
-              placeholder={'请输入名称'}
-              onChange={handleInputChange}
-              value={name}
-              autoComplete='new-password'
-              required={!isEdit}
-            />
-          </Form.Field>
-          <Form.Field>
-            <Form.Dropdown
-              label='模型范围'
-              placeholder={'请选择允许使用的模型，留空则不进行限制'}
-              name='models'
-              fluid
-              multiple
-              search
-              onLabelClick={(e, { value }) => {
-                copy(value).then();
+    <div className='dashboard-container'>
+      <Card fluid className='chart-card'>
+        <Card.Content>
+          <Card.Header className='header'>
+            {isEdit ? '更新令牌信息' : '创建新的令牌'}
+          </Card.Header>
+          <Form loading={loading} autoComplete='new-password'>
+            <Form.Field>
+              <Form.Input
+                label='名称'
+                name='name'
+                placeholder={'请输入名称'}
+                onChange={handleInputChange}
+                value={name}
+                autoComplete='new-password'
+                required={!isEdit}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Form.Dropdown
+                label='模型范围'
+                placeholder={'请选择允许使用的模型，留空则不进行限制'}
+                name='models'
+                fluid
+                multiple
+                search
+                onLabelClick={(e, { value }) => {
+                  copy(value).then();
+                }}
+                selection
+                onChange={handleInputChange}
+                value={inputs.models}
+                autoComplete='new-password'
+                options={modelOptions}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Form.Input
+                label='IP 限制'
+                name='subnet'
+                placeholder={
+                  '请输入允许访问的网段，例如：192.168.0.0/24，请使用英文逗号分隔多个网段'
+                }
+                onChange={handleInputChange}
+                value={inputs.subnet}
+                autoComplete='new-password'
+              />
+            </Form.Field>
+            <Form.Field>
+              <Form.Input
+                label='过期时间'
+                name='expired_time'
+                placeholder={
+                  '请输入过期时间，格式为 yyyy-MM-dd HH:mm:ss，-1 表示无限制'
+                }
+                onChange={handleInputChange}
+                value={expired_time}
+                autoComplete='new-password'
+                type='datetime-local'
+              />
+            </Form.Field>
+            <div style={{ lineHeight: '40px' }}>
+              <Button
+                type={'button'}
+                onClick={() => {
+                  setExpiredTime(0, 0, 0, 0);
+                }}
+              >
+                永不过期
+              </Button>
+              <Button
+                type={'button'}
+                onClick={() => {
+                  setExpiredTime(1, 0, 0, 0);
+                }}
+              >
+                一个月后过期
+              </Button>
+              <Button
+                type={'button'}
+                onClick={() => {
+                  setExpiredTime(0, 1, 0, 0);
+                }}
+              >
+                一天后过期
+              </Button>
+              <Button
+                type={'button'}
+                onClick={() => {
+                  setExpiredTime(0, 0, 1, 0);
+                }}
+              >
+                一小时后过期
+              </Button>
+              <Button
+                type={'button'}
+                onClick={() => {
+                  setExpiredTime(0, 0, 0, 1);
+                }}
+              >
+                一分钟后过期
+              </Button>
+            </div>
+            <Message>
+              注意，令牌的额度仅用于限制令牌本身的最大额度使用量，实际的使用受到账户的剩余额度限制。
+            </Message>
+            <Form.Field>
+              <Form.Input
+                label={`额度${renderQuotaWithPrompt(remain_quota)}`}
+                name='remain_quota'
+                placeholder={'请输入额度'}
+                onChange={handleInputChange}
+                value={remain_quota}
+                autoComplete='new-password'
+                type='number'
+                disabled={unlimited_quota}
+              />
+            </Form.Field>
+            <Button
+              type={'button'}
+              onClick={() => {
+                setUnlimitedQuota();
               }}
-              selection
-              onChange={handleInputChange}
-              value={inputs.models}
-              autoComplete='new-password'
-              options={modelOptions}
-            />
-          </Form.Field>
-          <Form.Field>
-            <Form.Input
-              label='IP 限制'
-              name='subnet'
-              placeholder={'请输入允许访问的网段，例如：192.168.0.0/24，请使用英文逗号分隔多个网段'}
-              onChange={handleInputChange}
-              value={inputs.subnet}
-              autoComplete='new-password'
-            />
-          </Form.Field>
-          <Form.Field>
-            <Form.Input
-              label='过期时间'
-              name='expired_time'
-              placeholder={'请输入过期时间，格式为 yyyy-MM-dd HH:mm:ss，-1 表示无限制'}
-              onChange={handleInputChange}
-              value={expired_time}
-              autoComplete='new-password'
-              type='datetime-local'
-            />
-          </Form.Field>
-          <div style={{ lineHeight: '40px' }}>
-            <Button type={'button'} onClick={() => {
-              setExpiredTime(0, 0, 0, 0);
-            }}>永不过期</Button>
-            <Button type={'button'} onClick={() => {
-              setExpiredTime(1, 0, 0, 0);
-            }}>一个月后过期</Button>
-            <Button type={'button'} onClick={() => {
-              setExpiredTime(0, 1, 0, 0);
-            }}>一天后过期</Button>
-            <Button type={'button'} onClick={() => {
-              setExpiredTime(0, 0, 1, 0);
-            }}>一小时后过期</Button>
-            <Button type={'button'} onClick={() => {
-              setExpiredTime(0, 0, 0, 1);
-            }}>一分钟后过期</Button>
-          </div>
-          <Message>注意，令牌的额度仅用于限制令牌本身的最大额度使用量，实际的使用受到账户的剩余额度限制。</Message>
-          <Form.Field>
-            <Form.Input
-              label={`额度${renderQuotaWithPrompt(remain_quota)}`}
-              name='remain_quota'
-              placeholder={'请输入额度'}
-              onChange={handleInputChange}
-              value={remain_quota}
-              autoComplete='new-password'
-              type='number'
-              disabled={unlimited_quota}
-            />
-          </Form.Field>
-          <Button type={'button'} onClick={() => {
-            setUnlimitedQuota();
-          }}>{unlimited_quota ? '取消无限额度' : '设为无限额度'}</Button>
-          <Button floated='right' positive onClick={submit}>提交</Button>
-          <Button floated='right' onClick={handleCancel}>取消</Button>
-        </Form>
-      </Segment>
-    </>
+            >
+              {unlimited_quota ? '取消无限额度' : '设为无限额度'}
+            </Button>
+            <Button floated='right' positive onClick={submit}>
+              提交
+            </Button>
+            <Button floated='right' onClick={handleCancel}>
+              取消
+            </Button>
+          </Form>
+        </Card.Content>
+      </Card>
+    </div>
   );
 };
 
